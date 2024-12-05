@@ -12,22 +12,21 @@ class FirewallIndicatorApp(rumps.App):
     def get_firewall_state(self):
         try:
             result = subprocess.run(
-                ['defaults', 'read', '/Library/Preferences/com.apple.alf', 'globalstate'],
+                ['/usr/libexec/ApplicationFirewall/socketfilterfw', '--getglobalstate'],
                 capture_output=True,
                 text=True
             )
-            state = result.stdout.strip()
-            return int(state)
+            return result.stdout.strip()
         except Exception as e:
             print(f"Error reading firewall state: {e}")
             return None
 
     def update_firewall_status(self, _=None):
         state = self.get_firewall_state()
-        if state == 0:
+        if 'Firewall is disabled.' in state or 'State = 0' in state:
             self.title = "Firewall: Disabled"
             self.icon = self.icon_path_disabled
-        elif state == 1 or state == 2:
+        elif 'Firewall is enabled.' in state or 'State = 1' in state:
             self.title = "Firewall: Enabled"
             self.icon = self.icon_path_enabled
         else:
